@@ -4,8 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const mobileToggle = document.querySelector('.mobile-toggle');
     const mainNav = document.querySelector('.main-nav');
 
-    // Smooth Scroll Scaling Engine
+    // 1. Smooth Scroll Scaling Engine & Dynamic Scroll-Spy Hash Links
     window.addEventListener('scroll', () => {
+        // Handle Header Scale Animation
         if (window.scrollY > 40) {
             header.style.backgroundColor = 'rgba(2, 6, 23, 0.98)';
             header.style.boxShadow = '0 10px 30px rgba(0,0,0,0.6)';
@@ -25,9 +26,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 logoWrapper.style.top = '10px';
             }
         }
+
+        // Scroll-Spy: Track user position and seamlessly update the address URL hash bar
+        let currentSectionId = '';
+        const sections = document.querySelectorAll('header, section, div[id]');
+        const scrollPosition = window.scrollY + 140; // Offset accounts for header thickness
+
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.offsetHeight;
+            const id = section.getAttribute('id');
+            
+            if (id && scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                currentSectionId = id;
+            }
+        });
+
+        if (currentSectionId) {
+            const activeLink = document.querySelector(`.nav-link[href="#${currentSectionId}"]`);
+            if (activeLink && !activeLink.classList.contains('active')) {
+                document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+                activeLink.classList.add('active');
+                // Updates the link dynamically without jarring visual page jumps
+                history.replaceState(null, null, `#${currentSectionId}`);
+            }
+        }
     });
 
-    // Mobile Navigation Drawer Toggle System
+    // 2. Mobile Navigation Drawer Toggle System
     if (mobileToggle) {
         mobileToggle.addEventListener('click', () => {
             mainNav.classList.toggle('active');
@@ -35,14 +61,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Smooth scrolling calculation layout logic
+    // 3. Smooth Scrolling Logic With Click Tracking URL Updates
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+            const targetId = this.getAttribute('href');
+            const target = document.querySelector(targetId);
+            
             if (target) {
                 if (mainNav.classList.contains('active')) {
                     mainNav.classList.remove('active');
+                    if (mobileToggle) mobileToggle.classList.remove('open');
+                }
+                
+                // Keep the active highlight on clicked tab
+                document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+                if (this.classList.contains('nav-link')) {
+                    this.classList.add('active');
                 }
                 
                 const headerOffset = 90;
@@ -53,27 +88,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     top: offsetPosition,
                     behavior: "smooth"
                 });
+
+                // Update the address bar link on click instantly
+                history.pushState(null, null, targetId);
             }
         });
     });
 });
 
-// Dynamic Client Redirection Engine for WhatsApp Form Submissions
-document.getElementById('bookingForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+// 4. Dynamic Client Redirection Engine for WhatsApp Form Submissions
+const bookingForm = document.getElementById('bookingForm');
+if (bookingForm) {
+    bookingForm.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-    const name = document.getElementById('userName').value;
-    const phone = document.getElementById('userPhone').value;
-    const service = document.getElementById('userService').value;
-    const message = document.getElementById('userMessage').value;
+        const name = document.getElementById('userName').value;
+        const phone = document.getElementById('userPhone').value;
+        const service = document.getElementById('userService').value;
+        const message = document.getElementById('userMessage').value;
 
-    const whatsappNumber = '13652757796'; 
-    const text = `Hi! I would like to book an appointment.%0A%0A` +
-                 `Name: ${name}%0A` +
-                 `Phone: ${phone}%0A` +
-                 `Service: ${service}%0A` +
-                 `Notes: ${message}`;
+        const whatsappNumber = '13652757796'; 
+        const text = `Hi! I would like to book an appointment.%0A%0A` +
+                     `Name: ${name}%0A` +
+                     `Phone: ${phone}%0A` +
+                     `Service: ${service}%0A` +
+                     `Notes: ${message}`;
 
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${text}`;
-    window.open(whatsappUrl, '_blank');
-});
+        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${text}`;
+        window.open(whatsappUrl, '_blank');
+    });
+}
